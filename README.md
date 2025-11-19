@@ -1,2 +1,110 @@
 # urandom-kiss
-A zero-dependency Rust wrapper for Linux and macOS /dev/urandom, exposing raw entropy reads, FIPS mode detection, and kernel RNG environment queries. Designed for simplicity, portability, and no_std-compatible builds.
+
+A zero-dependency Rust wrapper for Linux and macOS /dev/urandom, exposing raw entropy reads, FIPS
+mode detection, and kernel RNG environment queries. Designed for simplicity, portability, and
+no_std-compatible builds.
+
+## Badges
+
+[![crates.io](https://img.shields.io/crates/v/urandom-kiss.svg)](https://crates.io/crates/urandom-kiss)  
+[![docs.rs](https://img.shields.io/docsrs/urandom-kiss)](https://docs.rs/urandom-kiss)  
+![CI](https://github.com/yourname/urandom-kiss/actions/workflows/ci.yml/badge.svg)
+
+---
+
+## Overview
+
+`urandom-kiss` provides a tiny, no_std-friendly interface for reading secure random bytes directly
+from `/dev/urandom` and related system sources on Unix-like systems. It is designed for developers
+who want a predictable, minimal abstraction without pulling in a full RNG framework or any
+third-party dependencies.
+
+The crate also includes optional helpers for detecting whether the system is running in FIPS mode
+and for identifying the type of RNG environment exposed by the OS. These utilities are especially
+useful for security-sensitive applications that need visibility into the underlying system behavior.
+
+Use this crate when you want a straightforward, low-complexity wrapper around the kernel’s
+randomness facilities without involving `rand`, `getrandom`, or higher-level libraries.
+
+---
+
+## Quick Start
+
+### Cargo.toml
+
+```toml
+[dependencies]
+urandom-kiss = "0.1"
+```
+
+### Minimal Example
+
+```rust
+use urandom_kiss::read_urandom;
+
+fn main() {
+    let mut buf = [0u8; 32];
+    read_urandom(&mut buf).expect("urandom read failed");
+
+    println!("Random bytes: {:02x?}", buf);
+}
+```
+
+If you enable optional features, you can also check FIPS mode or probe the RNG type:
+
+```rust
+use urandom_kiss::{is_fips_mode, detect_rng_type};
+
+fn main() {
+    println!("FIPS enabled: {}", is_fips_mode());
+    println!("RNG type: {:?}", detect_rng_type());
+}
+```
+
+---
+
+## Features
+
+- **`fips`** — Enable detection of FIPS mode (via `/proc/sys/crypto/fips_enabled`).
+- **`detect-rng`** — Identify the system's RNG type using sysfs/procfs and CPU feature flags.
+- **`no_std`** — Build without the Rust standard library (only `core` + OS syscalls).  
+
+---
+
+## MSRV & Platform Support
+
+- **Minimum Supported Rust Version:** 1.85
+- **Tested on:**
+    - Linux (x86_64, aarch64)
+    - macOS (x86_64, aarch64/ARM64)
+    - BSD variants are expected to work, but not yet CI-tested
+- Windows is **not supported**, as `/dev/urandom` does not exist there.
+
+---
+
+## Roadmap / Status
+
+**Status:** Early alpha.
+
+The core `/dev/urandom` wrapper is stable and minimal by design, but supporting modules (FIPS
+detection, RNG-type introspection) may evolve as more platforms are tested. Future improvements may
+include:
+
+- More detailed RNG environment probing
+- Better macOS/BSD detection paths
+- Optional WASI stub behavior
+
+Breaking changes may still occur while the crate is in 0.x versions.
+
+---
+
+## Contributing
+
+Contributions, issue reports, and suggestions are welcome and encouraged. Please open a GitHub 
+issue or submit a pull request if you’d like to help improve the crate.
+
+---
+
+## License
+
+Licensed under the MIT License. See `LICENSE-MIT` for details.

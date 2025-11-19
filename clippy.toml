@@ -1,0 +1,14 @@
+# clippy.toml
+
+msrv = "1.85.0"
+allowed-scripts = ["Latin"]
+cognitive-complexity-threshold = 25
+too-many-arguments-threshold = 7
+type-complexity-threshold = 250
+enum-variant-size-threshold = 200
+disallowed-methods = [
+    # Prefer explicit error handling instead of unguarded unwrap/expect
+    { path = "std::option::Option::unwrap", reason = "prefer explicit error handling" },
+    { path = "std::result::Result::unwrap", reason = "prefer explicit error handling" },
+    { path = "std::result::Result::expect", reason = "prefer explicit error handling" },
+]

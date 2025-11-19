@@ -1,0 +1,31 @@
+[package]
+name = "urandom-kiss"
+version = "0.1.0"
+edition = "2024"
+
+description = "A zero-dependency Rust wrapper for Linux and macOS /dev/urandom, exposing raw entropy reads, FIPS mode detection, and kernel RNG environment queries."
+license = "LICENSE-MIT"
+repository = "https://github.com/ptdecker/urandom-kiss"
+homepage = "https://github.com/ptdecker/urandom-kiss"
+documentation = "https://docs.rs/urandom-kiss"
+readme = "README.md"
+keywords = ["urandom", "rng", "no_std", "linux", "entropy"]
+categories = ["os::unix-apis", "api-bindings", "no-std"]
+authors = ["P. Todd Decker <ptdecker@mac.com>"]
+rust-version = "1.85.0"
+
+[features]
+default = []
+
+[package.metadata.docs.rs]
+all-features = true
+
+[dependencies]
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+cargo = "warn"
+unwrap_used = "deny"
+expect_used = "deny"
