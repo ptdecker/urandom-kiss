@@ -8,7 +8,7 @@ no_std-compatible builds.
 
 [![crates.io](https://img.shields.io/crates/v/urandom-kiss.svg)](https://crates.io/crates/urandom-kiss)  
 [![docs.rs](https://img.shields.io/docsrs/urandom-kiss)](https://docs.rs/urandom-kiss)  
-[![CI]([https://github.com/ptdecker/urandom-kiss/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ptdecker/urandom-kiss/actions/workflows/CI.yml](https://github.com/ptdecker/urandom-kiss/actions/workflows/rust.yml)
+[![CI]([https://github.com/ptdecker/urandom-kiss/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/ptdecker/urandom-kiss/actions/workflows/CI.yml](https://github.com/ptdecker/urandom-kiss/actions/workflows/rust.yml)
 
 ---
 
