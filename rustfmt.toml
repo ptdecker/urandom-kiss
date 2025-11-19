@@ -10,7 +10,7 @@ hard_tabs = false
 match_arm_leading_pipes = "Always"
 
 # TODO: The following are nightly-only on rustfmt and must not be set on stable. If we enable
-#  nighly-only in our toolchain, we will enable these.
+#  nightly-only in our toolchain, we will enable these.
 #  [Issue #1](https://github.com/ptdecker/urandom-kiss/issues/1)
 #
 # wrap_comments = true
