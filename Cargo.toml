@@ -1,6 +1,6 @@
 [package]
 name = "kiss-entropy"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 description = "A zero-dependency Rust wrapper for Linux and macOS /dev/urandom, exposing raw entropy reads, FIPS mode detection, and kernel RNG environment queries."
@@ -17,10 +17,26 @@ rust-version = "1.85.0"
 [features]
 default = []
 
+[lib]
+name = "kiss_entropy"
+path = "src/lib.rs"
+
 [package.metadata.docs.rs]
 all-features = true
 
 [dependencies]
+
+[profile.release]
+codegen-units = 1
+debug = false
+lto = true
+opt-level = 3
+panic = "abort"
+rpath = false
+strip = true
+
+[profile.dev]
+debug = true
 
 [lints.clippy]
 # Broad groups: warn, but with lower priority than specific lints
@@ -31,7 +47,8 @@ cargo    = { level = "warn", priority = -2 }
 
 # Specific lints: these override the groups
 unwrap_used = "deny"
-panic = "deny"
-todo = "deny"
-unimplemented = "deny"
 expect_used = "deny"
+indexing_slicing = "deny"
+panic = "deny"
+todo = "warn"
+unimplemented = "warn"

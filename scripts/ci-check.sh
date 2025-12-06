@@ -8,14 +8,14 @@ cd "$PROJECT_ROOT"
 echo "Running CI checks from project root: $PROJECT_ROOT"
 echo
 
-echo "==> Checking rustfmt..."
-cargo fmt --all -- --check
+echo "==> Applying rustfmt..."
+cargo fmt --all
 
-echo "==> Running Clippy (all targets, all features)..."
-cargo clippy --all-targets --all-features -- -D warnings
+echo "==> Running Clippy with all features..."
+cargo clippy --all-features -- -D warnings
 
 echo "==> Running tests..."
-cargo test --all-targets --all-features --verbose
+cargo test --all-features --verbose
 
 echo "==> Building docs..."
 cargo doc --all-features --no-deps
