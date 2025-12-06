@@ -202,7 +202,6 @@ mod tests {
     fn fills_buffer_successfully() {
         let mut buf = [0u8; 32];
         fill_from_urandom(&mut buf).unwrap();
-        // fill_from_urandom(&mut buf).expect("fill_from_urandom failed");
         assert_ne!(buf, [0u8; 32], "buffer was left all zeros");
     }
 
