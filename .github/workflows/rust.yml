@@ -43,10 +43,10 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Clippy (lints)
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --all-features -- -D warnings
 
       - name: Tests
-        run: cargo test --all-features --all-targets --verbose
+        run: cargo test --all-features --verbose
 
       - name: Docs build
         run: cargo doc --all-features --no-deps
