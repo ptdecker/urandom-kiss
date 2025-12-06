@@ -1,6 +1,6 @@
 [package]
 name = "kiss-entropy"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 description = "A zero-dependency Rust wrapper for Linux and macOS /dev/urandom, exposing raw entropy reads, FIPS mode detection, and kernel RNG environment queries."
