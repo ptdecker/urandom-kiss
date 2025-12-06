@@ -68,12 +68,12 @@ mod tests {
         let mut a = [0u8; 32];
         let mut b = [0u8; 32];
 
-        fill(&mut a).expect("first urandom_fill failed");
-        fill(&mut b).expect("second urandom_fill failed");
+        fill(&mut a).expect("first fill failed");
+        fill(&mut b).expect("second fill failed");
 
         // Probability of 256 bits colliding is 2^-256; acceptable risk for a test.
         // If this ever triggers in practice, it's a strong hint that something
         // is wrong in the implementation or environment.
-        assert_ne!(a, b, "Two urandom_fill calls produced identical 32-byte outputs; suspicious.")
+        assert_ne!(a, b, "Two fill calls produced identical 32-byte outputs; suspicious.")
     }
 }
