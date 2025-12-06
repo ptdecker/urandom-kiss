@@ -4,7 +4,7 @@ use super::{UrandomError, fmt};
 
 /// Public error type for this crate.
 ///
-/// Currently, there's only one variant, which wraps the internal [`Error`].
+/// Currently, there's only one variant, which wraps the internal [`UrandomError`].
 #[derive(Debug)]
 pub enum Error {
     Urandom(UrandomError),
