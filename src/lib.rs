@@ -55,7 +55,7 @@ mod tests {
         let all_zero = buf.iter().all(|&b| b == 0);
         assert!(
             !all_zero,
-            "Buffer still all zeros after urandom_fill(); extremely unlikely unless urandom is broken."
+            "Buffer still all zeros after fill(); extremely unlikely unless urandom is broken."
         );
     }
 
