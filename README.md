@@ -6,11 +6,9 @@ no_std-compatible builds.
 
 ## Badges
 
-[![crates.io](https://img.shields.io/crates/v/kiss-entropy.svg)](https://crates.
-io/crates/kiss-entropy)  
-[![docs.rs](https://img.shields.io/docsrs/kiss-entropy)](https://docs.rs/kiss-entropy)  
-[![CI](https://github.com/ptdecker/kiss-entropy/actions/workflows/rust.yml/badge.svg?branch=main)]
-(https://github.com/ptdecker/kiss-entropy/actions/workflows/rust.yml)
+[![crates.io](https://img.shields.io/crates/v/kiss-entropy.svg)](https://crates.io/crates/kiss-entropy)
+[![docs.rs](https://img.shields.io/docsrs/kiss-entropy)](https://docs.rs/kiss-entropy)
+[![CI](https://github.com/ptdecker/kiss-entropy/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/ptdecker/kiss-entropy/actions/workflows/rust.yml)
 
 ---
 
