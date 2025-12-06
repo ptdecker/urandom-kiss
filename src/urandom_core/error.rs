@@ -25,7 +25,7 @@ impl fmt::Display for Error {
             | Self::ReadFailed => f.write_str("Could not read /dev/urandom"),
             | Self::ShortRead => f.write_str("/dev/urandom returned too few bytes"),
             | Self::OffsetOutOfRange => f.write_str("The offset is out of range"),
-            | Self::OffsetOverflow => f.write_str("The offset is overflow"),
+            | Self::OffsetOverflow => f.write_str("The offset overflowed"),
         }
     }
 }
