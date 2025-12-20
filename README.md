@@ -39,15 +39,11 @@ kiss-entropy = "0.1"
 
 ### Minimal Example
 
-```rust
-use kiss_entropy::read_urandom;
+See [simple_fill](examples/simple_fill.rs) for a simple example of using the library to fill a
+buffer with random bytes.
 
-fn main() {
-    let mut buf = [0u8; 32];
-    read_urandom(&mut buf).expect("urandom read failed");
-
-    println!("Random bytes: {:02x?}", buf);
-}
+```shell
+cargo run --example simple_fill
 ```
 
 If you enable optional features, you can also check FIPS mode or probe the RNG type:
@@ -67,7 +63,6 @@ fn main() {
 
 - **`fips`** — Enable detection of FIPS mode (via `/proc/sys/crypto/fips_enabled`).
 - **`detect-rng`** — Identify the system's RNG type using sysfs/procfs and CPU feature flags.
-- **`no_std`** — Build without the Rust standard library (only `core` + OS syscalls).  
 
 ---
 
