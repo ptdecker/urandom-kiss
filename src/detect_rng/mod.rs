@@ -309,8 +309,8 @@ mod linux_hwrng {
     impl core::fmt::Display for DetectError {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                DetectError::OsError(e) => write!(f, "OS error (errno={e})"),
-                DetectError::ParseError => write!(f, "parse error"),
+                | DetectError::OsError(e) => write!(f, "OS error (errno={e})"),
+                | DetectError::ParseError => write!(f, "parse error"),
             }
         }
     }
