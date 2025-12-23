@@ -293,7 +293,7 @@ mod macos_rng {
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 mod linux_hwrng {
-    use super::{DetectError, Result, RngType};
+    use super::{DetectError, RngType};
 
     // Paths used by the Linux hwrng framework:
     // - /sys/devices/virtual/misc/hw_random/rng_current
@@ -318,7 +318,7 @@ mod linux_hwrng {
         // Fall back to rng_available: if it lists anything, treat as hardware RNG present.
         if let Ok(s) = read_small_cstr_file(RNG_AVAILABLE) {
             if s.is_empty() {
-                return Ok(None);
+                return Ok(None::<RngType>);
             }
             // If it mentions a known driver, return it; otherwise Unknown.
             if let Some(t) = map_driver_name(s) {
@@ -406,7 +406,7 @@ mod linux_hwrng {
 
     // openat flags
     const O_RDONLY: usize = 0;
-    const O_CLOEXEC: usize = 0o2000000;
+    const O_CLOEXEC: usize = 0o2_000_000;
 
     fn sys_open_readonly(path_cstr: &[u8]) -> Result<usize> {
         // path_cstr must be NUL-terminated.
