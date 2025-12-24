@@ -140,6 +140,7 @@ pub const fn detect_rng() -> Option<RngType> {
         if x86_cpuid::has_rdrand() {
             return Some(RngType::X86Rdrand);
         }
+        None
     }
 
     // 2) Linux sysfs hwrng detection (OS-specific).
@@ -147,14 +148,11 @@ pub const fn detect_rng() -> Option<RngType> {
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     {
         match linux_hwrng::detect_from_sysfs() {
-            | Ok(Some(x)) => return Some(t),
+            | Ok(Some(t)) => return Some(t),
             | Ok(None) => return None,
             | Err(_) => return Some(RngType::Unknown),
         }
     }
-
-    // Fallback
-    None
 }
 
 #[cfg(target_os = "macos")]
