@@ -432,13 +432,7 @@ mod linux_hwrng {
         if path_cstr.is_empty() || *path_cstr.last().is_none() {
             return Err(DetectError::ParseError);
         }
-        let fd = syscall4(
-            SYS_OPENAT,
-            AT_FDCWD,
-            path_cstr.as_ptr(),
-            (O_RDONLY | O_CLOEXEC),
-            0,
-        );
+        let fd = syscall4(SYS_OPENAT, AT_FDCWD, path_cstr.as_ptr(), (O_RDONLY | O_CLOEXEC), 0);
         errno_result(fd)
     }
 
