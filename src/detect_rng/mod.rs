@@ -130,7 +130,7 @@ impl Display for RngType {
 /// hardware-backed mechanism can be identified.
 #[cfg(not(target_os = "macos"))]
 #[must_use]
-pub const fn detect_rng() -> Option<RngType> {
+pub fn detect_rng() -> Option<RngType> {
     // 1) CPU instruction-based detection (works without OS access).
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {
@@ -140,7 +140,6 @@ pub const fn detect_rng() -> Option<RngType> {
         if x86_cpuid::has_rdrand() {
             return Some(RngType::X86Rdrand);
         }
-        return None;
     }
 
     // 2) Linux sysfs hwrng detection (OS-specific).
@@ -149,10 +148,12 @@ pub const fn detect_rng() -> Option<RngType> {
     {
         match linux_hwrng::detect_from_sysfs() {
             | Ok(Some(t)) => return Some(t),
-            | Ok(None) => return None,
+            | Ok(None) => (),
             | Err(_) => return Some(RngType::Unknown),
         }
     }
+
+    None
 }
 
 #[cfg(target_os = "macos")]
