@@ -147,9 +147,9 @@ pub const fn detect_rng() -> Option<RngType> {
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     {
         match linux_hwrng::detect_from_sysfs() {
-            Ok(Some(x)) => return Some(t),
-            Ok(None) => return None,
-            Err(_) => return Some(RngType::Unknown),
+            | Ok(Some(x)) => return Some(t),
+            | Ok(None) => return None,
+            | Err(_) => return Some(RngType::Unknown),
         }
     }
 
@@ -255,7 +255,10 @@ mod macos_rng {
 
     #[inline]
     fn sysctl_u32_eq_1(name_cstr: &[u8]) -> bool {
-        use core::{mem::size_of, ffi::{c_char, c_void}};
+        use core::{
+            ffi::{c_char, c_void},
+            mem::size_of,
+        };
 
         // Require NUL-terminated; avoid unwrap to satisfy clippy::unwrap_used.
         match name_cstr.last() {
