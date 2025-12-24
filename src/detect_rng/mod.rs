@@ -305,8 +305,8 @@ mod linux_hwrng {
     impl core::fmt::Display for DetectError {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                | DetectError::OsError(e) => write!(f, "OS error (errno={e})"),
-                | DetectError::ParseError => write!(f, "parse error"),
+                | Self::OsError(e) => write!(f, "OS error (errno={e})"),
+                | Self::ParseError => write!(f, "parse error"),
             }
         }
     }
@@ -322,31 +322,31 @@ mod linux_hwrng {
     const RNG_CURRENT: &[u8] = b"/sys/devices/virtual/misc/hw_random/rng_current\0";
     const RNG_AVAILABLE: &[u8] = b"/sys/devices/virtual/misc/hw_random/rng_available\0";
 
-    pub fn detect_from_sysfs() -> Result<Option<RngType>> {
+    pub fn detect_from_sysfs() -> Option<RngType> {
         // If rng_current exists and is readable, parse it.
         if let Ok(s) = read_small_cstr_file(RNG_CURRENT) {
             if let Some(t) = map_driver_name(s) {
-                return Ok(Some(t));
+                return Some(t);
             }
             // If it exists but doesn't match known names, it's still evidence of hwrng presence.
             if !s.is_empty() {
-                return Ok(Some(RngType::LinuxHwrngCurrentDriver));
+                return Some(RngType::LinuxHwrngCurrentDriver);
             }
         }
 
         // Fall back to rng_available: if it lists anything, treat as hardware RNG present.
         if let Ok(s) = read_small_cstr_file(RNG_AVAILABLE) {
             if s.is_empty() {
-                return Ok(None::<RngType>);
+                return None::<RngType>;
             }
             // If it mentions a known driver, return it; otherwise Unknown.
             if let Some(t) = map_driver_name(s) {
-                return Ok(Some(t));
+                return Some(t);
             }
-            return Ok(Some(RngType::Unknown));
+            return Some(RngType::Unknown);
         }
 
-        Ok(None)
+        None
     }
 
     fn map_driver_name(s: &[u8]) -> Option<RngType> {
@@ -386,7 +386,7 @@ mod linux_hwrng {
         let n = sys_read(fd, unsafe { &mut BUF })?;
         let _ = sys_close(fd);
 
-        let trimmed = trim_ascii_whitespace(unsafe { &BUF[..n] });
+        let trimmed = trim_ascii_whitespace(BUF.get(..n).unwrap_or(BUF));
         // Return as static lifetime because BUF is static. Caller must treat it as ephemeral.
         Ok(unsafe { core::mem::transmute::<&[u8], &'static [u8]>(trimmed) })
     }
@@ -408,7 +408,7 @@ mod linux_hwrng {
     }
 
     #[inline]
-    fn is_ws(b: u8) -> bool {
+    const fn is_ws(b: u8) -> bool {
         matches!(b, b' ' | b'\n' | b'\r' | b'\t')
     }
 
@@ -417,34 +417,34 @@ mod linux_hwrng {
     // ---------------------------
 
     // x86_64 Linux syscall numbers:
-    const SYS_READ: usize = 0;
-    const SYS_CLOSE: usize = 3;
-    const SYS_OPENAT: usize = 257;
+    const SYS_READ: isize = 0;
+    const SYS_CLOSE: isize = 3;
+    const SYS_OPENAT: isize = 257;
 
     const AT_FDCWD: isize = -100;
 
     // openat flags
-    const O_RDONLY: usize = 0;
-    const O_CLOEXEC: usize = 0o2_000_000;
+    const O_RDONLY: isize = 0;
+    const O_CLOEXEC: isize = 0o2_000_000;
 
-    fn sys_open_readonly(path_cstr: &[u8]) -> Result<usize> {
+    fn sys_open_readonly(path_cstr: &[u8]) -> Result<isize> {
         // path_cstr must be NUL-terminated.
-        if path_cstr.is_empty() || *path_cstr.last().unwrap() != 0 {
+        if path_cstr.is_empty() || *path_cstr.last().is_none() {
             return Err(DetectError::ParseError);
         }
         let fd = syscall4(
             SYS_OPENAT,
-            AT_FDCWD as usize,
-            path_cstr.as_ptr() as usize,
-            (O_RDONLY | O_CLOEXEC) as usize,
+            AT_FDCWD,
+            path_cstr.as_ptr(),
+            (O_RDONLY | O_CLOEXEC),
             0,
         );
-        errno_result(fd).map(|v| v as usize)
+        errno_result(fd)
     }
 
-    fn sys_read(fd: usize, buf: &mut [u8]) -> Result<usize> {
-        let n = syscall3(SYS_READ, fd, buf.as_mut_ptr() as usize, buf.len());
-        errno_result(n).map(|v| v as usize)
+    fn sys_read(fd: usize, buf: &mut [u8]) -> Result<isize> {
+        let n = syscall3(SYS_READ, fd, buf.as_mut_ptr(), buf.len());
+        errno_result(n)
     }
 
     fn sys_close(fd: usize) -> Result<()> {
@@ -463,13 +463,13 @@ mod linux_hwrng {
     }
 
     #[inline(always)]
-    fn syscall1(n: usize, a1: usize) -> isize {
+    fn syscall1(n: isize, a1: isize) -> isize {
         let ret: isize;
         unsafe {
             core::arch::asm!(
             "syscall",
-            inlateout("rax") n as isize => ret,
-            in("rdi") a1 as isize,
+            inlateout("rax") n => ret,
+            in("rdi") a1,
             lateout("rcx") _,
             lateout("r11") _,
             options(nostack, preserves_flags),
@@ -479,15 +479,15 @@ mod linux_hwrng {
     }
 
     #[inline(always)]
-    fn syscall3(n: usize, a1: usize, a2: usize, a3: usize) -> isize {
+    fn syscall3(n: isize, a1: isize, a2: isize, a3: isize) -> isize {
         let ret: isize;
         unsafe {
             core::arch::asm!(
             "syscall",
-            inlateout("rax") n as isize => ret,
-            in("rdi") a1 as isize,
-            in("rsi") a2 as isize,
-            in("rdx") a3 as isize,
+            inlateout("rax") => ret,
+            in("rdi") a1,
+            in("rsi") a2,
+            in("rdx") a3,
             lateout("rcx") _,
             lateout("r11") _,
             options(nostack, preserves_flags),
@@ -497,16 +497,16 @@ mod linux_hwrng {
     }
 
     #[inline(always)]
-    fn syscall4(n: usize, a1: usize, a2: usize, a3: usize, a4: usize) -> isize {
+    fn syscall4(n: isize, a1: isize, a2: isize, a3: isize, a4: isize) -> isize {
         let ret: isize;
         unsafe {
             core::arch::asm!(
             "syscall",
-            inlateout("rax") n as isize => ret,
-            in("rdi") a1 as isize,
-            in("rsi") a2 as isize,
-            in("rdx") a3 as isize,
-            in("r10") a4 as isize,
+            inlateout("rax") => ret,
+            in("rdi") a1,
+            in("rsi") a2,
+            in("rdx") a3,
+            in("r10") a4,
             lateout("rcx") _,
             lateout("r11") _,
             options(nostack, preserves_flags),
