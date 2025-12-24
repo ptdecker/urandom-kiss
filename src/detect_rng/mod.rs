@@ -431,7 +431,12 @@ mod linux_hwrng {
     }
 
     fn sys_read(fd: isize, buf: &mut [u8]) -> Result<isize> {
-        let n = syscall3(SYS_READ, fd, buf.as_mut_ptr() as isize, buf.len().min(isize::MAX as usize) as isize);
+        let n = syscall3(
+            SYS_READ,
+            fd,
+            buf.as_mut_ptr() as isize,
+            buf.len().min(isize::MAX as usize) as isize,
+        );
         errno_result(n)
     }
 
