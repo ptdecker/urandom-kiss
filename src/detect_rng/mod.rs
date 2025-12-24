@@ -156,8 +156,10 @@ pub const fn detect_rng() -> Option<RngType> {
     // Implemented only for x86_64 Linux here, using raw syscalls (no libc, no std).
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     {
-        if let Some(t) = linux_hwrng::detect_from_sysfs()? {
-            return Some(t);
+        match linux_hwrng::detect_from_sysfs() {
+            Ok(Some(x)) => return Some(t),
+            Ok(None) => return None,
+            Err(_) => return Some(RngType::Unknown),
         }
     }
 
@@ -293,7 +295,9 @@ mod macos_rng {
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 mod linux_hwrng {
-    use super::{DetectError, RngType};
+    use super::RngType;
+
+    use core::fmt;
 
     /// Errors that may occur during RNG detection.
     ///
