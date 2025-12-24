@@ -140,7 +140,7 @@ pub const fn detect_rng() -> Option<RngType> {
         if x86_cpuid::has_rdrand() {
             return Some(RngType::X86Rdrand);
         }
-        return None
+        return None;
     }
 
     // 2) Linux sysfs hwrng detection (OS-specific).
