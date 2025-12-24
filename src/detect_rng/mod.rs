@@ -132,21 +132,18 @@ impl Display for RngType {
 #[cfg(all(target_os = "linux", target_arch = "x86"))]
 #[must_use]
 pub fn detect_rng() -> Option<RngType> {
-    if x86_cpuid::has_rdseed() {
+    if x86_cpuid::has_rdseed() || x86_cpuid::has_rdrand() {
         return Some(RngType::X86Rdseed);
-    }
-    if x86_cpuid::has_rdrand() {
-        return Some(RngType::X86Rdrand);
     }
     None;
 }
 
 /// Linux sysfs hwrng detection (OS-specific).
-/// Implemented only for x86_64 Linux here, using raw syscalls (no libc, no std).
+/// Implemented only for `x86_64` Linux here, using raw syscalls (no libc, no std).
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 #[must_use]
 pub fn detect_rng() -> Option<RngType> {
-    return linux_hwrng::detect_from_sysfs();
+    linux_hwrng::detect_from_sysfs()
 }
 
 #[cfg(target_os = "macos")]
@@ -154,13 +151,8 @@ pub fn detect_rng() -> Option<RngType> {
 pub fn detect_rng() -> Option<RngType> {
     // 1) If we're on Intel macOS, CPUID is definitive and doesn't depend on sysctl visibility.
     #[cfg(all(target_os = "macos", any(target_arch = "x86", target_arch = "x86_64")))]
-    {
-        if x86_cpuid::has_rdseed() {
-            return Some(RngType::X86Rdseed);
-        }
-        if x86_cpuid::has_rdrand() {
-            return Some(RngType::X86Rdrand);
-        }
+    if x86_cpuid::has_rdseed() || x86_cpuid::has_rdrand() {
+        return Some(RngType::X86Rdseed);
     }
 
     // 2) macOS `sysctl` probes
@@ -172,7 +164,10 @@ pub fn detect_rng() -> Option<RngType> {
     Some(RngType::MacosKernelCprng)
 }
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(any(
+    all(target_os = "macos", any(target_arch = "x86", target_arch = "x86_64")),
+    all(target_os = "linux", target_arch = "x86"),
+))]
 mod x86_cpuid {
     #[cfg(target_arch = "x86")]
     use core::arch::x86::__cpuid;
@@ -282,7 +277,7 @@ mod macos_rng {
 mod linux_hwrng {
     use super::RngType;
 
-    use core::fmt;
+    use core::{fmt, ptr, slice};
 
     /// Errors that may occur during RNG detection.
     ///
@@ -293,6 +288,8 @@ mod linux_hwrng {
         OsError(i32),
         /// Unexpected / malformed data (e.g., sysfs/sysctl content not in the expected format).
         ParseError,
+        /// Unexpected / bounds check wrap
+        InvalidLength,
     }
 
     impl core::fmt::Display for DetectError {
@@ -300,7 +297,14 @@ mod linux_hwrng {
             match self {
                 | Self::OsError(e) => write!(f, "OS error (errno={e})"),
                 | Self::ParseError => write!(f, "parse error"),
+                | Self::InvalidLength => write!(f, "invalid length"),
             }
+        }
+    }
+
+    impl From<core::num::TryFromIntError> for DetectError {
+        fn from(_: core::num::TryFromIntError) -> Self {
+            Self::ParseError
         }
     }
 
@@ -368,23 +372,28 @@ mod linux_hwrng {
     /// Read a small sysfs file into a fixed buffer, trim trailing whitespace/newlines,
     /// and return the bytes slice (no allocation).
     fn read_small_cstr_file(path_cstr: &[u8]) -> Result<&'static [u8]> {
-        // This function uses a static buffer to stay no_std + no_alloc.
-        // This is not re-entrant/thread-safe; if you need that, pass in a caller buffer instead.
-        //
-        // If you'd prefer re-entrant behavior, replace this with:
-        //   fn read_small_cstr_file_into(path, buf: &mut [u8]) -> Result<&[u8]>
         static mut BUF: [u8; 256] = [0u8; 256];
 
         let fd = sys_open_readonly(path_cstr)?;
-        let n = sys_read(fd, unsafe { &mut BUF })? as usize;
+
+        // Get a raw pointer to the buffer without creating any references.
+        let buf_ptr: *mut u8 = ptr::addr_of_mut!(BUF).cast::<u8>();
+        let buf_len: usize = 256;
+
+        let n_isize = sys_read_raw(fd, buf_ptr, buf_len)?;
+        let n: usize = n_isize.try_into()?;
         let _ = sys_close(fd);
 
-        let trimmed = unsafe { trim_ascii_whitespace(BUF.get(..n).unwrap_or(&BUF)) };
-        // Return as static lifetime because BUF is static. Caller must treat it as ephemeral.
+        let trimmed: &[u8] = unsafe {
+            let full = slice::from_raw_parts(buf_ptr.cast_const(), buf_len);
+            let slice = full.get(..n).ok_or(DetectError::InvalidLength)?;
+            trim_ascii_whitespace(slice)
+        };
+
         Ok(unsafe { core::mem::transmute::<&[u8], &'static [u8]>(trimmed) })
     }
 
-    fn trim_ascii_whitespace(mut s: &[u8]) -> &[u8] {
+    const fn trim_ascii_whitespace(mut s: &[u8]) -> &[u8] {
         while let Some((&b, rest)) = s.split_first() {
             if !is_ws(b) {
                 break;
@@ -430,13 +439,17 @@ mod linux_hwrng {
         errno_result(fd)
     }
 
-    fn sys_read(fd: isize, buf: &mut [u8]) -> Result<isize> {
+    fn sys_read_raw(fd: isize, buf: *mut u8, len: usize) -> Result<isize> {
+        // Convert len to isize without panic; error out if it cannot fit.
+        let len_isize: isize = len.try_into()?;
+
         let n = syscall3(
             SYS_READ,
             fd,
-            buf.as_mut_ptr() as isize,
-            buf.len().min(isize::MAX as usize) as isize,
+            buf as isize,
+            len_isize,
         );
+
         errno_result(n)
     }
 
@@ -449,12 +462,13 @@ mod linux_hwrng {
     fn errno_result(ret: isize) -> Result<isize> {
         if ret < 0 {
             // Linux syscalls return -errno.
-            Err(DetectError::OsError((-ret) as i32))
+            Err(DetectError::OsError(i32::try_from(-ret)?))
         } else {
             Ok(ret)
         }
     }
 
+    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn syscall1(n: isize, a1: isize) -> isize {
         let ret: isize;
@@ -471,6 +485,7 @@ mod linux_hwrng {
         ret
     }
 
+    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn syscall3(n: isize, a1: isize, a2: isize, a3: isize) -> isize {
         let ret: isize;
@@ -489,6 +504,7 @@ mod linux_hwrng {
         ret
     }
 
+    #[allow(clippy::inline_always)]
     #[inline(always)]
     fn syscall4(n: isize, a1: isize, a2: isize, a3: isize, a4: isize) -> isize {
         let ret: isize;
