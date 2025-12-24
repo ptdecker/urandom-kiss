@@ -1,6 +1,8 @@
 // We don't need the standard library
 #![no_std]
 
+#[cfg(feature = "detect_rng")]
+mod detect_rng;
 pub mod error;
 mod urandom_core;
 
@@ -30,6 +32,21 @@ use urandom_core::fill_from_urandom;
 pub fn fill(buf: &mut [u8]) -> Result<(), Error> {
     Ok(fill_from_urandom(buf)?)
 }
+
+/// Public re-publishing of `detect_rnd` implementation.
+///
+/// This is the function that consumers of the crate are expected to call.
+///
+/// # Examples
+///
+/// ```
+/// # use kiss_entropy::detect_rng;
+/// println!("{:?}", detect_rng());
+/// ```
+/// # Errors
+/// Does not return an error
+#[cfg(feature = "detect_rng")]
+pub use detect_rng::detect_rng;
 
 #[cfg(test)]
 mod tests {

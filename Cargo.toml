@@ -16,6 +16,8 @@ rust-version = "1.85.0"
 
 [features]
 default = []
+# Enable random number generator type detection
+detect_rng = []
 
 [lib]
 name = "kiss_entropy"

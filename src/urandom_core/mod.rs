@@ -194,6 +194,7 @@ pub fn fill_from_urandom(buf: &mut [u8]) -> Result<(), Error> {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used)]
     use super::*;
 
     /// Basic sanity test: `fill_from_urandom` should succeed and fill the buffer

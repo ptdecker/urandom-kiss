@@ -46,15 +46,12 @@ buffer with random bytes.
 cargo run --example simple_fill
 ```
 
+### Optional Features
+
 If you enable optional features, you can also check FIPS mode or probe the RNG type:
 
-```rust
-use kiss_entropy::{is_fips_mode, detect_rng_type};
-
-fn main() {
-    println!("FIPS enabled: {}", is_fips_mode());
-    println!("RNG type: {:?}", detect_rng_type());
-}
+```shell
+cargo run --features=detect_rng --example detect_rng
 ```
 
 ---
@@ -65,6 +62,24 @@ fn main() {
 - **`detect-rng`** — Identify the system's RNG type using sysfs/procfs and CPU feature flags.
 
 ---
+
+### Experimental RNG Detection
+
+This project includes experimental detection of hardware-backed random number generators. The
+detection logic is best-effort only and is subject to operating system and platform limitations. At
+present, RNG detection does not attempt to prove that the operating system’s random number generator
+is seeded from a specific hardware source. The implementation can only detect the presence of 
+certain hardware or kernel mechanisms when the platform exposes that information. Some operating
+systems (notably macOS) intentionally abstract entropy sources, making precise attribution 
+impossible by design.
+
+#### Current Testing Status
+
+As of the current release, RNG detection has been tested only on macOS running on Apple Silicon 
+(M1). Other platforms (including Intel macOS, Linux distributions, and virtualized environments) are
+supported on a best-effort basis but have not yet been validated in real-world testing. The RNG
+detection API and reported classifications may change in future versions as additional platforms are
+tested and detection heuristics are refined.
 
 ## MSRV & Platform Support
 
