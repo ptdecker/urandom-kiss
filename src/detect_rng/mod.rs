@@ -49,9 +49,7 @@
 //! }
 //! ```
 
-use super::fmt;
-
-use core::fmt::Display;
+use core::fmt::{self, Display};
 
 /// Detected hardware RNG source/type (best-effort).
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -70,7 +68,7 @@ pub enum RngType {
     /// CPU instruction-based entropy seed generator (`RDSEED`) on Intel/AMD `x86/x86_64` CPUs.
     ///
     /// `RDSEED` is intended to provide seed material or entropy suitable for seeding a software
-    /// DRAG.
+    /// DRNG.
     X86Rdseed,
     /// ARMv8.5-A `FEAT_RNG` (`RNDR`/`RNDRRS`) support on aarch64.
     ///
@@ -144,15 +142,7 @@ pub const fn detect_rng() -> Option<RngType> {
         }
     }
 
-    // 2) macOS detection via sysctlbyname (OS-specific, no_std-friendly).
-    #[cfg(target_os = "macos")]
-    {
-        if let Some(t) = macos_rng::detect_via_sysctl() {
-            return Some(t);
-        }
-    }
-
-    // 3) Linux sysfs hwrng detection (OS-specific).
+    // 2) Linux sysfs hwrng detection (OS-specific).
     // Implemented only for x86_64 Linux here, using raw syscalls (no libc, no std).
     #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
     {
@@ -265,7 +255,7 @@ mod macos_rng {
 
     #[inline]
     fn sysctl_u32_eq_1(name_cstr: &[u8]) -> bool {
-        use core::ffi::{c_char, c_void};
+        use core::{mem::size_of, ffi::{c_char, c_void}};
 
         // Require NUL-terminated; avoid unwrap to satisfy clippy::unwrap_used.
         match name_cstr.last() {
